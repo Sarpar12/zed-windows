@@ -1,8 +1,7 @@
-name: Build Zed for Windows
+name: Build Zed for Windows (Portable)
 
 on:
   workflow_dispatch:
-
 
 jobs:
   Build:
@@ -30,23 +29,17 @@ jobs:
         git config --global user.name github-actions[bot]
         git clone https://github.com/zed-industries/zed -b main zed
 
-    - name: Build Executable
+    - name: Build Portable Executable
       run: |
         cd zed
         cargo build --release
+        copy target\release\zed.exe ..\zed-portable.exe
 
-    - name: Compile Setup Wizard
-      uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-      with:
-        path: zed_wizard.iss
-        options: /O+
-        
-    - name: Upload Setup Wizard
+    - name: Upload Portable Executable
       uses: actions/upload-artifact@v4
       with:
-        name: setup
-        path: Output\zed_setup.exe
-
+        name: zed-portable
+        path: zed-portable.exe
 
   Upload:
     needs: Build
@@ -55,11 +48,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
 
-      - name: Download Release Folder
+      - name: Download Portable Executable
         uses: actions/download-artifact@v4
         with:
-          name: setup
-          path: Output
+          name: zed-portable
 
       - name: Setup Git Environment
         run: |
@@ -77,6 +69,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ steps.tag.outputs.release_date }} Zed Windows
+          name: ${{ steps.tag.outputs.release_date }} Zed Windows Portable
           tag_name: ${{ steps.tag.outputs.release_tag }}
-          files: Output/zed_setup.exe
+          files: zed-portable.exe
